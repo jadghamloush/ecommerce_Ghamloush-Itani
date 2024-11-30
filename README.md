@@ -1,7 +1,3 @@
-Certainly! Below is a comprehensive `README.md` file for your project. This README includes all necessary sections to guide your professor through building, running, and testing your containerized applications.
-
----
-
 # E-commerce Microservices Project
 
 ## Project Overview
