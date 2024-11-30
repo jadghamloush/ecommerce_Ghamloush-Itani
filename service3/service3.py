@@ -10,6 +10,7 @@ def connect_to_db():
 def create_db_table():
     try:
         conn = connect_to_db()
+        
         conn.execute('''
             CREATE TABLE sales (
                 sale_id INTEGER PRIMARY KEY NOT NULL,
@@ -63,6 +64,7 @@ def make_sale(customer_username, good_name):
     sale_result = {}
     try:
         conn = connect_to_db()
+        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
         # Check if the customer has enough money in the wallet
