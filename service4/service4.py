@@ -1,337 +1,588 @@
-#!/usr/bin/python
-"""
-Sales Management API using Flask and SQLite.
-
-This module provides a RESTful API for managing sales transactions in an inventory system.
-It includes functionalities such as displaying available goods, retrieving good details,
-processing sales, and fetching customer-specific sales records.
-
-Dependencies:
-    - Flask: Web framework for creating the API.
-    - Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).
-    - sqlite3: Database engine for storing sales and goods data.
-"""
-
-import sqlite3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required,
+    get_jwt_identity
+)
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configure JWT
+app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Change this to a strong secret in production
+jwt = JWTManager(app)
+
+DATABASE = 'reviews_database.db'
 
 def connect_to_db():
     """
     Establishes a connection to the SQLite database.
 
     Returns:
-        sqlite3.Connection: A connection object to the 'sales_database.db' SQLite database.
+        sqlite3.Connection: A connection object to the 'reviews_database.db'.
     """
-    conn = sqlite3.connect('sales_database.db')
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def create_db_table():
     """
-    Creates the 'sales' table in the SQLite database.
-
-    The table includes fields for sale ID, customer username, good name, sale date, and sale amount.
-    If the table already exists, an error message is printed.
-
-    Returns:
-        None
+    Creates the necessary tables in the database if they do not already exist.
+    Tables:
+        - users: Stores user credentials and roles.
+        - reviews: Stores product reviews with moderation status.
     """
     try:
         conn = connect_to_db()
-        
         conn.execute('''
-            CREATE TABLE sales (
-                sale_id INTEGER PRIMARY KEY NOT NULL,
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL CHECK(role IN ('user', 'admin'))
+            );
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS reviews (
+                review_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_name TEXT NOT NULL,
                 customer_username TEXT NOT NULL,
-                good_name TEXT NOT NULL,
-                sale_date TEXT NOT NULL,
-                sale_amount REAL NOT NULL
+                rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+                comment TEXT,
+                moderated BOOLEAN DEFAULT 0,
+                flagged BOOLEAN DEFAULT 0,
+                FOREIGN KEY (customer_username) REFERENCES users(username)
             );
         ''')
         conn.commit()
-        print("Sales table created successfully")
-    except sqlite3.OperationalError:
-        print("Sales table creation failed - Maybe table already exists")
+        print("Tables created successfully or already exist.")
+    except Exception as e:
+        print(f"Error creating tables: {e}")
     finally:
         conn.close()
 
-def display_available_goods():
+# User Registration
+@app.route('/api/register', methods=['POST'])
+def register():
     """
-    Retrieves all available goods with stock greater than zero.
-
-    Returns:
-        list: A list of dictionaries, each containing the 'name' and 'price_per_item' of a good.
-              Returns an empty list if an error occurs.
-    """
-    goods = []
-    try:
-        conn = connect_to_db()
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute("SELECT name, price_per_item FROM goods WHERE count_in_stock > 0")
-        rows = cur.fetchall()
-        for i in rows:
-            good = dict(i)
-            goods.append(good)
-    except sqlite3.Error as e:
-        print(f"Error fetching available goods: {e}")
-        goods = []
-    finally:
-        conn.close()
-    return goods
-
-def get_good_details(good_name):
-    """
-    Retrieves detailed information about a specific good by its name.
-
-    Args:
-        good_name (str): The name of the good to retrieve details for.
-
-    Returns:
-        dict: A dictionary containing all details of the good if found, otherwise an empty dictionary.
-    """
-    good = {}
-    try:
-        conn = connect_to_db()
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM goods WHERE name = ?", (good_name,))
-        row = cur.fetchone()
-        if row:
-            good = dict(row)
-    except sqlite3.Error as e:
-        print(f"Error fetching good details for '{good_name}': {e}")
-        good = {}
-    finally:
-        conn.close()
-    return good
-
-def make_sale(customer_username, good_name):
-    """
-    Processes a sale by deducting the item's price from the customer's wallet and decreasing the stock count.
-
-    Args:
-        customer_username (str): The username of the customer making the purchase.
-        good_name (str): The name of the good being purchased.
-
-    Returns:
-        dict: A message indicating the result of the sale operation.
-    """
-    sale_result = {}
-    try:
-        conn = connect_to_db()
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-
-        # Check if the customer has enough money in the wallet
-        cur.execute("SELECT wallet_balance FROM customers WHERE username = ?", (customer_username,))
-        wallet_row = cur.fetchone()
-        if not wallet_row:
-            sale_result["status"] = "Customer not found."
-            return sale_result
-        wallet_balance = wallet_row["wallet_balance"]
-
-        # Check if the good exists and has sufficient stock
-        cur.execute("SELECT price_per_item, count_in_stock FROM goods WHERE name = ?", (good_name,))
-        good_row = cur.fetchone()
-        if not good_row:
-            sale_result["status"] = "Good not found."
-            return sale_result
-
-        price = good_row["price_per_item"]
-        stock = good_row["count_in_stock"]
-
-        if wallet_balance >= price and stock > 0:
-            # Deduct money from the customer's wallet
-            cur.execute("UPDATE customers SET wallet_balance = wallet_balance - ? WHERE username = ?", (price, customer_username))
-            # Decrease the count of the purchased good from the database
-            cur.execute("UPDATE goods SET count_in_stock = count_in_stock - 1 WHERE name = ?", (good_name,))
-            # Record the sale in the sales table
-            cur.execute("""
-                INSERT INTO sales (customer_username, good_name, sale_date, sale_amount)
-                VALUES (?, ?, datetime('now'), ?)
-            """, (customer_username, good_name, price))
-            conn.commit()
-            sale_result["status"] = "Sale successful"
-        else:
-            sale_result["status"] = "Insufficient funds or item not available for sale"
-    except sqlite3.Error as e:
-        conn.rollback()
-        print(f"Error processing sale for '{customer_username}' and '{good_name}': {e}")
-        sale_result["status"] = "Sale failed"
-    finally:
-        conn.close()
-    return sale_result
-
-def get_customer_sales(customer_username):
-    """
-    Retrieves all sales made by a specific customer.
-
-    Args:
-        customer_username (str): The username of the customer whose sales records are to be retrieved.
-
-    Returns:
-        list: A list of dictionaries, each representing a sale made by the customer.
-              Returns an empty list if an error occurs or no sales are found.
-    """
-    sales = []
-    try:
-        conn = connect_to_db()
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM sales WHERE customer_username = ?", (customer_username,))
-        rows = cur.fetchall()
-        for i in rows:
-            sale = dict(i)
-            sales.append(sale)
-    except sqlite3.Error as e:
-        print(f"Error fetching sales for customer '{customer_username}': {e}")
-        sales = []
-    finally:
-        conn.close()
-    return sales
-
-# Initialize Flask application
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-@app.route('/api/display_goods', methods=['GET'])
-def api_display_goods():
-    """
-    API Endpoint to retrieve all available goods with stock greater than zero.
-
-    Method:
-        GET
-
-    URL:
-        /api/display_goods
-
-    Success Response:
-        Code: 200
-        Content: List of goods dictionaries in JSON format.
-
-    Example:
-        GET /api/display_goods
-    """
-    return jsonify(display_available_goods()), 200
-
-@app.route('/api/goods_details/<good_name>', methods=['GET'])
-def api_get_good_details(good_name):
-    """
-    API Endpoint to retrieve detailed information about a specific good by its name.
-
-    Method:
-        GET
-
-    URL:
-        /api/goods_details/<good_name>
-
-    URL Parameters:
-        good_name (str): The name of the good to retrieve details for.
-
-    Success Response:
-        Code: 200
-        Content: Good details dictionary in JSON format.
-
-    Error Response:
-        Code: 404
-        Content: Error message indicating the good was not found.
-
-    Example:
-        GET /api/goods_details/Laptop
-    """
-    good = get_good_details(good_name)
-    if good:
-        return jsonify(good), 200
-    else:
-        return jsonify({"error": "Good not found"}), 404
-
-@app.route('/api/make_sale', methods=['POST'])
-def api_make_sale():
-    """
-    API Endpoint to process a sale transaction.
-
-    Method:
-        POST
-
-    URL:
-        /api/make_sale
+    API endpoint to register a new user.
 
     Request Body:
-        JSON object containing sale details:
-            - 'customer_username' (str): Username of the customer making the purchase.
-            - 'good_name' (str): Name of the good being purchased.
+        JSON object containing:
+            - username (str): The desired username.
+            - password (str): The desired password.
+            - role (str): The role of the user ('user' or 'admin').
 
-    Success Response:
-        Code: 200
-        Content: Message indicating the result of the sale operation.
+    Returns:
+        Response: JSON response with a status message.
+    """
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role', 'user')  # Default role is 'user'
 
-    Error Response:
-        Code: 400
-        Content: Error message indicating missing fields or invalid data.
-        Code: 500
-        Content: Error message indicating server-side failure.
+    if not username or not password:
+        return jsonify({"status": "Error: Username and password are required."}), 400
 
-    Example:
-        POST /api/make_sale
-        {
-            "customer_username": "johndoe",
-            "good_name": "Laptop"
-        }
+    if role not in ['user', 'admin']:
+        return jsonify({"status": "Error: Invalid role specified."}), 400
+
+    hashed_password = generate_password_hash(password)
+
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                    (username, hashed_password, role))
+        conn.commit()
+        return jsonify({"status": "User registered successfully."}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"status": "Error: Username already exists."}), 409
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+# User Login
+@app.route('/api/login', methods=['POST'])
+def login():
+    """
+    API endpoint to authenticate a user and provide a JWT.
+
+    Request Body:
+        JSON object containing:
+            - username (str): The user's username.
+            - password (str): The user's password.
+
+    Returns:
+        Response: JSON response with the access token or an error message.
+    """
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"status": "Error: Username and password are required."}), 400
+
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT password, role FROM users WHERE username = ?", (username,))
+        user = cur.fetchone()
+        if user and check_password_hash(user['password'], password):
+            access_token = create_access_token(identity={'username': username, 'role': user['role']})
+            return jsonify(access_token=access_token), 200
+        else:
+            return jsonify({"status": "Error: Invalid username or password."}), 401
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+# Decorator for Admin-Only Routes
+def admin_required(fn):
+    """
+    Custom decorator to ensure that the user has admin privileges.
+
+    Args:
+        fn (function): The route function to decorate.
+
+    Returns:
+        function: The decorated function.
+    """
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        identity = get_jwt_identity()
+        if identity['role'] != 'admin':
+            return jsonify({"status": "Error: Admin privileges required."}), 403
+        return fn(*args, **kwargs)
+    wrapper.__name__ = fn.__name__
+    return wrapper
+
+# Insert Review (Authenticated Users)
+@app.route('/api/reviews', methods=['POST'])
+@jwt_required()
+def api_add_review():
+    """
+    API endpoint to add a new review. Only authenticated users can add reviews.
+
+    Request Body:
+        JSON object containing:
+            - product_name (str): The name of the product being reviewed.
+            - rating (int): The rating of the product (1-5).
+            - comment (str): The review comment.
+
+    Returns:
+        Response: JSON response with a status message.
+    """
+    data = request.get_json()
+    product_name = data.get('product_name')
+    rating = data.get('rating')
+    comment = data.get('comment', '')
+
+    if not product_name or not rating:
+        return jsonify({"status": "Error: Missing required fields."}), 400
+
+    if not isinstance(rating, int) or not (1 <= rating <= 5):
+        return jsonify({"status": "Error: Rating must be an integer between 1 and 5."}), 400
+
+    identity = get_jwt_identity()
+    customer_username = identity['username']
+
+    review = {
+        'product_name': product_name,
+        'customer_username': customer_username,
+        'rating': rating,
+        'comment': comment
+    }
+
+    return jsonify(insert_review(review)), 200
+
+def insert_review(review):
+    """
+    Inserts a new review into the 'reviews' table.
+
+    Args:
+        review (dict): A dictionary containing review details:
+            - product_name (str): The name of the product being reviewed.
+            - customer_username (str): The username of the customer submitting the review.
+            - rating (int): The rating of the product (1-5).
+            - comment (str): The review comment.
+
+    Returns:
+        dict: A status message indicating success or failure.
     """
     try:
-        sale_data = request.get_json()
-        required_fields = ['customer_username', 'good_name']
-        for field in required_fields:
-            if field not in sale_data:
-                return jsonify({"error": f"Missing field: {field}"}), 400
-
-        customer_username = sale_data['customer_username']
-        good_name = sale_data['good_name']
-        sale_result = make_sale(customer_username, good_name)
-
-        if sale_result["status"] == "Sale successful":
-            return jsonify(sale_result), 200
-        elif sale_result["status"] == "Insufficient funds or item not available for sale":
-            return jsonify(sale_result), 400
-        elif sale_result["status"] == "Customer not found." or sale_result["status"] == "Good not found.":
-            return jsonify(sale_result), 404
-        else:
-            return jsonify(sale_result), 500
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO reviews (product_name, customer_username, rating, comment) VALUES (?, ?, ?, ?)",
+                    (review['product_name'], review['customer_username'], review['rating'], review['comment']))
+        conn.commit()
+        return {"status": "Review added successfully"}
     except Exception as e:
-        return jsonify({"error": f"Invalid request: {e}"}), 400
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
 
-@app.route('/api/customer_sales/<customer_username>', methods=['GET'])
-def api_get_customer_sales(customer_username):
+# Update Review (Authenticated Users)
+@app.route('/api/reviews/<int:review_id>', methods=['PUT'])
+@jwt_required()
+def api_update_review(review_id):
     """
-    API Endpoint to retrieve all sales made by a specific customer.
+    API endpoint to update an existing review. Only the author or an admin can update a review.
 
-    Method:
-        GET
+    Args:
+        review_id (int): The ID of the review to update.
 
-    URL:
-        /api/customer_sales/<customer_username>
+    Request Body:
+        JSON object containing:
+            - rating (int): The updated rating of the product (1-5).
+            - comment (str): The updated review comment.
 
-    URL Parameters:
-        customer_username (str): The username of the customer whose sales records are to be retrieved.
-
-    Success Response:
-        Code: 200
-        Content: List of sales dictionaries in JSON format.
-
-    Error Response:
-        Code: 404
-        Content: Error message indicating the customer was not found or has no sales.
-
-    Example:
-        GET /api/customer_sales/johndoe
+    Returns:
+        Response: JSON response with a status message.
     """
-    sales = get_customer_sales(customer_username)
-    if sales:
-        return jsonify(sales), 200
-    else:
-        return jsonify({"error": "No sales found for the customer"}), 404
+    data = request.get_json()
+    rating = data.get('rating')
+    comment = data.get('comment', '')
+
+    if rating is not None:
+        if not isinstance(rating, int) or not (1 <= rating <= 5):
+            return jsonify({"status": "Error: Rating must be an integer between 1 and 5."}), 400
+
+    identity = get_jwt_identity()
+    customer_username = identity['username']
+    user_role = identity['role']
+
+    # Fetch the review to verify ownership
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT customer_username FROM reviews WHERE review_id = ?", (review_id,))
+        review = cur.fetchone()
+        if not review:
+            return jsonify({"status": "Error: Review not found."}), 404
+        if review['customer_username'] != customer_username and user_role != 'admin':
+            return jsonify({"status": "Error: Unauthorized to update this review."}), 403
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+    updated_review = {}
+    if rating is not None:
+        updated_review['rating'] = rating
+    if comment:
+        updated_review['comment'] = comment
+
+    if not updated_review:
+        return jsonify({"status": "Error: No fields to update."}), 400
+
+    return jsonify(update_review(review_id, updated_review)), 200
+
+def update_review(review_id, updated_review):
+    """
+    Updates an existing review in the 'reviews' table.
+
+    Args:
+        review_id (int): The ID of the review to update.
+        updated_review (dict): A dictionary containing the updated review details:
+            - rating (int): The updated rating of the product (1-5).
+            - comment (str): The updated review comment.
+
+    Returns:
+        dict: A status message indicating success or failure.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE reviews SET rating = ?, comment = ? WHERE review_id = ?",
+                    (updated_review.get('rating'), updated_review.get('comment'), review_id))
+        conn.commit()
+        return {"status": "Review updated successfully"}
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
+
+# Delete Review (Authenticated Users)
+@app.route('/api/reviews/<int:review_id>', methods=['DELETE'])
+@jwt_required()
+def api_delete_review(review_id):
+    """
+    API endpoint to delete a review. Only the author or an admin can delete a review.
+
+    Args:
+        review_id (int): The ID of the review to delete.
+
+    Returns:
+        Response: JSON response with a status message.
+    """
+    identity = get_jwt_identity()
+    customer_username = identity['username']
+    user_role = identity['role']
+
+    # Fetch the review to verify ownership
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT customer_username FROM reviews WHERE review_id = ?", (review_id,))
+        review = cur.fetchone()
+        if not review:
+            return jsonify({"status": "Error: Review not found."}), 404
+        if review['customer_username'] != customer_username and user_role != 'admin':
+            return jsonify({"status": "Error: Unauthorized to delete this review."}), 403
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+    return jsonify(delete_review(review_id)), 200
+
+def delete_review(review_id):
+    """
+    Deletes a review from the 'reviews' table.
+
+    Args:
+        review_id (int): The ID of the review to delete.
+
+    Returns:
+        dict: A status message indicating success or failure.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM reviews WHERE review_id = ?", (review_id,))
+        conn.commit()
+        return {"status": "Review deleted successfully"}
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
+
+# Retrieve Product Reviews (Public)
+@app.route('/api/reviews/product/<product_name>', methods=['GET'])
+def api_get_product_reviews(product_name):
+    """
+    API endpoint to retrieve all reviews for a specific product.
+
+    Args:
+        product_name (str): The name of the product.
+
+    Returns:
+        Response: JSON response containing a list of reviews.
+    """
+    reviews = get_product_reviews(product_name)
+    if isinstance(reviews, dict) and 'status' in reviews:
+        return jsonify(reviews), 500
+    return jsonify(reviews), 200
+
+def get_product_reviews(product_name):
+    """
+    Retrieves all reviews for a specific product.
+
+    Args:
+        product_name (str): The name of the product.
+
+    Returns:
+        list[dict]: A list of reviews for the specified product.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM reviews WHERE product_name = ?", (product_name,))
+        rows = cur.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
+
+# Retrieve Customer Reviews (Authenticated Users)
+@app.route('/api/reviews/customer/<customer_username>', methods=['GET'])
+@jwt_required()
+def api_get_customer_reviews(customer_username):
+    """
+    API endpoint to retrieve all reviews submitted by a specific customer.
+    Only the customer themselves or an admin can access this endpoint.
+
+    Args:
+        customer_username (str): The username of the customer.
+
+    Returns:
+        Response: JSON response containing a list of reviews.
+    """
+    identity = get_jwt_identity()
+    requester_username = identity['username']
+    user_role = identity['role']
+
+    if requester_username != customer_username and user_role != 'admin':
+        return jsonify({"status": "Error: Unauthorized to view these reviews."}), 403
+
+    reviews = get_customer_reviews(customer_username)
+    if isinstance(reviews, dict) and 'status' in reviews:
+        return jsonify(reviews), 500
+    return jsonify(reviews), 200
+
+def get_customer_reviews(customer_username):
+    """
+    Retrieves all reviews submitted by a specific customer.
+
+    Args:
+        customer_username (str): The username of the customer.
+
+    Returns:
+        list[dict]: A list of reviews submitted by the specified customer.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM reviews WHERE customer_username = ?", (customer_username,))
+        rows = cur.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
+
+# Flag Review (Authenticated Users)
+@app.route('/api/reviews/flag/<int:review_id>', methods=['POST'])
+@jwt_required()
+def api_flag_review(review_id):
+    """
+    API endpoint to flag a review as inappropriate.
+
+    Args:
+        review_id (int): The ID of the review to flag.
+
+    Returns:
+        Response: JSON response with a status message.
+    """
+    identity = get_jwt_identity()
+    customer_username = identity['username']
+
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        # Check if the review exists
+        cur.execute("SELECT * FROM reviews WHERE review_id = ?", (review_id,))
+        review = cur.fetchone()
+        if not review:
+            return jsonify({"status": "Error: Review not found."}), 404
+        # Update the 'flagged' status
+        cur.execute("UPDATE reviews SET flagged = 1 WHERE review_id = ?", (review_id,))
+        conn.commit()
+        return jsonify({"status": "Review flagged for moderation."}), 200
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+# Moderate Review (Admin Only)
+@app.route('/api/reviews/moderate/<int:review_id>', methods=['POST'])
+@admin_required
+def api_moderate_review(review_id):
+    """
+    API endpoint to moderate a flagged review. Only administrators can access this endpoint.
+
+    Args:
+        review_id (int): The ID of the review to moderate.
+
+    Request Body:
+        JSON object containing:
+            - action (str): The moderation action ('approve' or 'reject').
+
+    Returns:
+        Response: JSON response with a status message.
+    """
+    data = request.get_json()
+    action = data.get('action')
+
+    if action not in ['approve', 'reject']:
+        return jsonify({"status": "Error: Invalid action. Use 'approve' or 'reject'."}), 400
+
+    # Fetch the review to verify it's flagged
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT flagged FROM reviews WHERE review_id = ?", (review_id,))
+        review = cur.fetchone()
+        if not review:
+            return jsonify({"status": "Error: Review not found."}), 404
+        if not review['flagged']:
+            return jsonify({"status": "Error: Review is not flagged for moderation."}), 400
+    except Exception as e:
+        return jsonify({"status": f"Error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+    # Perform moderation
+    result = moderate_review(review_id, action)
+    return jsonify(result), 200
+
+def moderate_review(review_id, action):
+    """
+    Moderates a review by approving or rejecting it.
+
+    Args:
+        review_id (int): The ID of the review to moderate.
+        action (str): The moderation action ('approve' or 'reject').
+
+    Returns:
+        dict: A status message indicating success or failure.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        moderated_value = 1 if action == "approve" else 0
+        cur.execute("UPDATE reviews SET moderated = ?, flagged = 0 WHERE review_id = ?",
+                    (moderated_value, review_id))
+        conn.commit()
+        return {"status": "Review moderated successfully"}
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
+
+# Retrieve Review Details (Public)
+@app.route('/api/reviews/details/<int:review_id>', methods=['GET'])
+def api_get_review_details(review_id):
+    """
+    API endpoint to retrieve the details of a specific review.
+
+    Args:
+        review_id (int): The ID of the review.
+
+    Returns:
+        Response: JSON response with review details or a status message.
+    """
+    review = get_review_details(review_id)
+    if isinstance(review, dict) and 'status' in review:
+        return jsonify(review), 404 if review['status'] == 'Review not found' else 500
+    return jsonify(review), 200
+
+def get_review_details(review_id):
+    """
+    Retrieves the details of a specific review.
+
+    Args:
+        review_id (int): The ID of the review.
+
+    Returns:
+        dict: The details of the review or a status message if not found.
+    """
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM reviews WHERE review_id = ?", (review_id,))
+        row = cur.fetchone()
+        return dict(row) if row else {"status": "Review not found"}
+    except Exception as e:
+        return {"status": f"Error: {str(e)}"}
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     create_db_table()
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5004)

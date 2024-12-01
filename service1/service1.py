@@ -15,7 +15,8 @@ Dependencies:
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
-
+import cProfile
+import pstats
 def connect_to_db():
     """
     Establishes a connection to the SQLite database.
@@ -399,7 +400,7 @@ def api_add_customer():
     customer = request.get_json()
     inserted_customer = insert_customer(customer)
     if inserted_customer:
-        return jsonify(inserted_customer), 201
+        return jsonify(inserted_customer), 200
     else:
         return jsonify({}), 400
 

@@ -33,87 +33,8 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-test_service4">
-<span id="test-service4-module"></span><h1>test_service4 module<a class="headerlink" href="#module-test_service4" title="Permalink to this heading">¶</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.client">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pytest fixture to set up a test client and initialize a test database.</p>
-<p>This fixture configures the Flask application for testing, overrides the database connection
-to use a test-specific database, creates the necessary database tables, and provides a test client
-for making API requests. After the tests are completed, it cleans up by removing the test database file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Yields</dt>
-<dd class="field-odd"><p><em>FlaskClient</em> – A test client for the Flask application.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.test_add_review">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_add_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_add_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_add_review" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the API endpoint for adding a new review.</p>
-<p>This test sends a POST request to the <cite>/api/reviews</cite> endpoint with valid review data
-and verifies that the review is added successfully.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.test_delete_review">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_delete_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_delete_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_delete_review" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the API endpoint for deleting a review.</p>
-<p>This test inserts a review directly into the test database, deletes it via a DELETE request,
-and verifies that the deletion is successful.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.test_get_product_reviews">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_get_product_reviews</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_get_product_reviews"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_get_product_reviews" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the API endpoint for retrieving all reviews of a specific product.</p>
-<p>This test inserts a review directly into the test database and then sends a GET request
-to the <cite>/api/reviews/product/&lt;product_name&gt;</cite> endpoint to verify that the review is retrieved correctly.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.test_moderate_review">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_moderate_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_moderate_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_moderate_review" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the API endpoint for moderating a review.</p>
-<p>This test inserts a review directly into the test database, moderates it via a POST request,
-and verifies that the moderation status is updated correctly.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="test_service4.test_update_review">
-<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_update_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_update_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_update_review" title="Permalink to this definition">¶</a></dt>
-<dd><p>Test the API endpoint for updating an existing review.</p>
-<p>This test inserts a review directly into the test database, updates it via a PUT request,
-and verifies that the update is successful.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
-</dd>
-</dl>
-</dd></dl>
-
+  <div class="section" id="test-service4-module">
+<h1>test_service4 module<a class="headerlink" href="#test-service4-module" title="Permalink to this heading">¶</a></h1>
 </div>
 
 

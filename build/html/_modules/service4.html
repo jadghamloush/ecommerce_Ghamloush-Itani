@@ -32,343 +32,299 @@
           <div class="body" role="main">
             
   <h1>Source code for service4</h1><div class="highlight"><pre>
-<span></span><span class="ch">#!/usr/bin/python</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Sales Management API using Flask and SQLite.</span>
-
-<span class="sd">This module provides a RESTful API for managing sales transactions in an inventory system.</span>
-<span class="sd">It includes functionalities such as displaying available goods, retrieving good details,</span>
-<span class="sd">processing sales, and fetching customer-specific sales records.</span>
-
-<span class="sd">Dependencies:</span>
-<span class="sd">    - Flask: Web framework for creating the API.</span>
-<span class="sd">    - Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).</span>
-<span class="sd">    - sqlite3: Database engine for storing sales and goods data.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span> <span class="nn">sqlite3</span>
-<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
+<span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
 <span class="kn">from</span> <span class="nn">flask_cors</span> <span class="kn">import</span> <span class="n">CORS</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
 
 <div class="viewcode-block" id="connect_to_db"><a class="viewcode-back" href="../service4.html#service4.connect_to_db">[docs]</a><span class="k">def</span> <span class="nf">connect_to_db</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Establishes a connection to the SQLite database.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        sqlite3.Connection: A connection object to the &#39;sales_database.db&#39; SQLite database.</span>
+<span class="sd">        sqlite3.Connection: A connection object to the &#39;reviews_database.db&#39;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;sales_database.db&#39;</span><span class="p">)</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;reviews_database.db&#39;</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
     <span class="k">return</span> <span class="n">conn</span></div>
 
 <div class="viewcode-block" id="create_db_table"><a class="viewcode-back" href="../service4.html#service4.create_db_table">[docs]</a><span class="k">def</span> <span class="nf">create_db_table</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates the &#39;sales&#39; table in the SQLite database.</span>
-
-<span class="sd">    The table includes fields for sale ID, customer username, good name, sale date, and sale amount.</span>
-<span class="sd">    If the table already exists, an error message is printed.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        None</span>
+<span class="sd">    Creates the &#39;reviews&#39; table in the database if it does not already exist.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
-        
         <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
-<span class="s1">            CREATE TABLE sales (</span>
-<span class="s1">                sale_id INTEGER PRIMARY KEY NOT NULL,</span>
+<span class="s1">            CREATE TABLE IF NOT EXISTS reviews (</span>
+<span class="s1">                review_id INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="s1">                product_name TEXT NOT NULL,</span>
 <span class="s1">                customer_username TEXT NOT NULL,</span>
-<span class="s1">                good_name TEXT NOT NULL,</span>
-<span class="s1">                sale_date TEXT NOT NULL,</span>
-<span class="s1">                sale_amount REAL NOT NULL</span>
+<span class="s1">                rating INTEGER NOT NULL CHECK(rating &gt;= 1 AND rating &lt;= 5),</span>
+<span class="s1">                comment TEXT,</span>
+<span class="s1">                moderated BOOLEAN DEFAULT 0</span>
 <span class="s1">            );</span>
 <span class="s1">        &#39;&#39;&#39;</span><span class="p">)</span>
         <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sales table created successfully&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">OperationalError</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sales table creation failed - Maybe table already exists&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reviews table created successfully&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating table: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="display_available_goods"><a class="viewcode-back" href="../service4.html#service4.display_available_goods">[docs]</a><span class="k">def</span> <span class="nf">display_available_goods</span><span class="p">():</span>
+<div class="viewcode-block" id="insert_review"><a class="viewcode-back" href="../service4.html#service4.insert_review">[docs]</a><span class="k">def</span> <span class="nf">insert_review</span><span class="p">(</span><span class="n">review</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieves all available goods with stock greater than zero.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        list: A list of dictionaries, each containing the &#39;name&#39; and &#39;price_per_item&#39; of a good.</span>
-<span class="sd">              Returns an empty list if an error occurs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">goods</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name, price_per_item FROM goods WHERE count_in_stock &gt; 0&quot;</span><span class="p">)</span>
-        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-            <span class="n">good</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-            <span class="n">goods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching available goods: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">goods</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">goods</span></div>
-
-<div class="viewcode-block" id="get_good_details"><a class="viewcode-back" href="../service4.html#service4.get_good_details">[docs]</a><span class="k">def</span> <span class="nf">get_good_details</span><span class="p">(</span><span class="n">good_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieves detailed information about a specific good by its name.</span>
+<span class="sd">    Inserts a new review into the &#39;reviews&#39; table.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        good_name (str): The name of the good to retrieve details for.</span>
+<span class="sd">        review (dict): A dictionary containing review details:</span>
+<span class="sd">            - product_name (str): The name of the product being reviewed.</span>
+<span class="sd">            - customer_username (str): The username of the customer submitting the review.</span>
+<span class="sd">            - rating (int): The rating of the product (1-5).</span>
+<span class="sd">            - comment (str): The review comment.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        dict: A dictionary containing all details of the good if found, otherwise an empty dictionary.</span>
+<span class="sd">        dict: A status message indicating success or failure.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">good</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
         <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM goods WHERE name = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good_name</span><span class="p">,))</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO reviews (product_name, customer_username, rating, comment) VALUES (?, ?, ?, ?)&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">review</span><span class="p">[</span><span class="s1">&#39;product_name&#39;</span><span class="p">],</span> <span class="n">review</span><span class="p">[</span><span class="s1">&#39;customer_username&#39;</span><span class="p">],</span> <span class="n">review</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">],</span> <span class="n">review</span><span class="p">[</span><span class="s1">&#39;comment&#39;</span><span class="p">]))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Review added successfully&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="update_review"><a class="viewcode-back" href="../service4.html#service4.update_review">[docs]</a><span class="k">def</span> <span class="nf">update_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">,</span> <span class="n">updated_review</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates an existing review in the &#39;reviews&#39; table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to update.</span>
+<span class="sd">        updated_review (dict): A dictionary containing the updated review details:</span>
+<span class="sd">            - rating (int): The updated rating of the product (1-5).</span>
+<span class="sd">            - comment (str): The updated review comment.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A status message indicating success or failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE reviews SET rating = ?, comment = ? WHERE review_id = ?&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">updated_review</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">],</span> <span class="n">updated_review</span><span class="p">[</span><span class="s1">&#39;comment&#39;</span><span class="p">],</span> <span class="n">review_id</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Review updated successfully&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="delete_review"><a class="viewcode-back" href="../service4.html#service4.delete_review">[docs]</a><span class="k">def</span> <span class="nf">delete_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes a review from the &#39;reviews&#39; table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to delete.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A status message indicating success or failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM reviews WHERE review_id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">review_id</span><span class="p">,))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Review deleted successfully&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="get_product_reviews"><a class="viewcode-back" href="../service4.html#service4.get_product_reviews">[docs]</a><span class="k">def</span> <span class="nf">get_product_reviews</span><span class="p">(</span><span class="n">product_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves all reviews for a specific product.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        product_name (str): The name of the product.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: A list of reviews for the specified product.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM reviews WHERE product_name = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">product_name</span><span class="p">,))</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="get_customer_reviews"><a class="viewcode-back" href="../service4.html#service4.get_customer_reviews">[docs]</a><span class="k">def</span> <span class="nf">get_customer_reviews</span><span class="p">(</span><span class="n">customer_username</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves all reviews submitted by a specific customer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        customer_username (str): The username of the customer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: A list of reviews submitted by the specified customer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM reviews WHERE customer_username = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">customer_username</span><span class="p">,))</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="moderate_review"><a class="viewcode-back" href="../service4.html#service4.moderate_review">[docs]</a><span class="k">def</span> <span class="nf">moderate_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Moderates a review by approving or rejecting it.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to moderate.</span>
+<span class="sd">        action (str): The moderation action (&#39;approve&#39; or &#39;reject&#39;).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A status message indicating success or failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE reviews SET moderated = ? WHERE review_id = ?&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;approve&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">review_id</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Review moderated successfully&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="get_review_details"><a class="viewcode-back" href="../service4.html#service4.get_review_details">[docs]</a><span class="k">def</span> <span class="nf">get_review_details</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves the details of a specific review.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: The details of the review or a status message if not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM reviews WHERE review_id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">review_id</span><span class="p">,))</span>
         <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
-            <span class="n">good</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching good details for &#39;</span><span class="si">{</span><span class="n">good_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">good</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;Review not found&quot;</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
     <span class="k">finally</span><span class="p">:</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">good</span></div>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="make_sale"><a class="viewcode-back" href="../service4.html#service4.make_sale">[docs]</a><span class="k">def</span> <span class="nf">make_sale</span><span class="p">(</span><span class="n">customer_username</span><span class="p">,</span> <span class="n">good_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Processes a sale by deducting the item&#39;s price from the customer&#39;s wallet and decreasing the stock count.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        customer_username (str): The username of the customer making the purchase.</span>
-<span class="sd">        good_name (str): The name of the good being purchased.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        dict: A message indicating the result of the sale operation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sale_result</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-
-        <span class="c1"># Check if the customer has enough money in the wallet</span>
-        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT wallet_balance FROM customers WHERE username = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">customer_username</span><span class="p">,))</span>
-        <span class="n">wallet_row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">wallet_row</span><span class="p">:</span>
-            <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Customer not found.&quot;</span>
-            <span class="k">return</span> <span class="n">sale_result</span>
-        <span class="n">wallet_balance</span> <span class="o">=</span> <span class="n">wallet_row</span><span class="p">[</span><span class="s2">&quot;wallet_balance&quot;</span><span class="p">]</span>
-
-        <span class="c1"># Check if the good exists and has sufficient stock</span>
-        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT price_per_item, count_in_stock FROM goods WHERE name = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good_name</span><span class="p">,))</span>
-        <span class="n">good_row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">good_row</span><span class="p">:</span>
-            <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Good not found.&quot;</span>
-            <span class="k">return</span> <span class="n">sale_result</span>
-
-        <span class="n">price</span> <span class="o">=</span> <span class="n">good_row</span><span class="p">[</span><span class="s2">&quot;price_per_item&quot;</span><span class="p">]</span>
-        <span class="n">stock</span> <span class="o">=</span> <span class="n">good_row</span><span class="p">[</span><span class="s2">&quot;count_in_stock&quot;</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">wallet_balance</span> <span class="o">&gt;=</span> <span class="n">price</span> <span class="ow">and</span> <span class="n">stock</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Deduct money from the customer&#39;s wallet</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE customers SET wallet_balance = wallet_balance - ? WHERE username = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">customer_username</span><span class="p">))</span>
-            <span class="c1"># Decrease the count of the purchased good from the database</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE goods SET count_in_stock = count_in_stock - 1 WHERE name = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good_name</span><span class="p">,))</span>
-            <span class="c1"># Record the sale in the sales table</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                INSERT INTO sales (customer_username, good_name, sale_date, sale_amount)</span>
-<span class="s2">                VALUES (?, ?, datetime(&#39;now&#39;), ?)</span>
-<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">customer_username</span><span class="p">,</span> <span class="n">good_name</span><span class="p">,</span> <span class="n">price</span><span class="p">))</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-            <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Sale successful&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Insufficient funds or item not available for sale&quot;</span>
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing sale for &#39;</span><span class="si">{</span><span class="n">customer_username</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">{</span><span class="n">good_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Sale failed&quot;</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">sale_result</span></div>
-
-<div class="viewcode-block" id="get_customer_sales"><a class="viewcode-back" href="../service4.html#service4.get_customer_sales">[docs]</a><span class="k">def</span> <span class="nf">get_customer_sales</span><span class="p">(</span><span class="n">customer_username</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieves all sales made by a specific customer.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        customer_username (str): The username of the customer whose sales records are to be retrieved.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        list: A list of dictionaries, each representing a sale made by the customer.</span>
-<span class="sd">              Returns an empty list if an error occurs or no sales are found.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sales</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM sales WHERE customer_username = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">customer_username</span><span class="p">,))</span>
-        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-            <span class="n">sale</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-            <span class="n">sales</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sale</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching sales for customer &#39;</span><span class="si">{</span><span class="n">customer_username</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">sales</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">sales</span></div>
-
-<span class="c1"># Initialize Flask application</span>
 <span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">CORS</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="p">{</span><span class="sa">r</span><span class="s2">&quot;/*&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;origins&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span><span class="p">}})</span>
 
-<div class="viewcode-block" id="api_display_goods"><a class="viewcode-back" href="../service4.html#service4.api_display_goods">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/display_goods&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">api_display_goods</span><span class="p">():</span>
+<div class="viewcode-block" id="api_add_review"><a class="viewcode-back" href="../service4.html#service4.api_add_review">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_add_review</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    API Endpoint to retrieve all available goods with stock greater than zero.</span>
+<span class="sd">    API endpoint to add a new review.</span>
 
-<span class="sd">    Method:</span>
-<span class="sd">        GET</span>
-
-<span class="sd">    URL:</span>
-<span class="sd">        /api/display_goods</span>
-
-<span class="sd">    Success Response:</span>
-<span class="sd">        Code: 200</span>
-<span class="sd">        Content: List of goods dictionaries in JSON format.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        GET /api/display_goods</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response with a status message.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">display_available_goods</span><span class="p">()),</span> <span class="mi">200</span></div>
+    <span class="n">review</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">insert_review</span><span class="p">(</span><span class="n">review</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="api_get_good_details"><a class="viewcode-back" href="../service4.html#service4.api_get_good_details">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods_details/&lt;good_name&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">api_get_good_details</span><span class="p">(</span><span class="n">good_name</span><span class="p">):</span>
+<div class="viewcode-block" id="api_update_review"><a class="viewcode-back" href="../service4.html#service4.api_update_review">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/&lt;int:review_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_update_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    API Endpoint to retrieve detailed information about a specific good by its name.</span>
+<span class="sd">    API endpoint to update an existing review.</span>
 
-<span class="sd">    Method:</span>
-<span class="sd">        GET</span>
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to update.</span>
 
-<span class="sd">    URL:</span>
-<span class="sd">        /api/goods_details/&lt;good_name&gt;</span>
-
-<span class="sd">    URL Parameters:</span>
-<span class="sd">        good_name (str): The name of the good to retrieve details for.</span>
-
-<span class="sd">    Success Response:</span>
-<span class="sd">        Code: 200</span>
-<span class="sd">        Content: Good details dictionary in JSON format.</span>
-
-<span class="sd">    Error Response:</span>
-<span class="sd">        Code: 404</span>
-<span class="sd">        Content: Error message indicating the good was not found.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        GET /api/goods_details/Laptop</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response with a status message.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">good</span> <span class="o">=</span> <span class="n">get_good_details</span><span class="p">(</span><span class="n">good_name</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">good</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">good</span><span class="p">),</span> <span class="mi">200</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Good not found&quot;</span><span class="p">}),</span> <span class="mi">404</span></div>
+    <span class="n">updated_review</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">update_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">,</span> <span class="n">updated_review</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="api_make_sale"><a class="viewcode-back" href="../service4.html#service4.api_make_sale">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/make_sale&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">api_make_sale</span><span class="p">():</span>
+<div class="viewcode-block" id="api_delete_review"><a class="viewcode-back" href="../service4.html#service4.api_delete_review">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/&lt;int:review_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_delete_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    API Endpoint to process a sale transaction.</span>
+<span class="sd">    API endpoint to delete a review.</span>
 
-<span class="sd">    Method:</span>
-<span class="sd">        POST</span>
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to delete.</span>
 
-<span class="sd">    URL:</span>
-<span class="sd">        /api/make_sale</span>
-
-<span class="sd">    Request Body:</span>
-<span class="sd">        JSON object containing sale details:</span>
-<span class="sd">            - &#39;customer_username&#39; (str): Username of the customer making the purchase.</span>
-<span class="sd">            - &#39;good_name&#39; (str): Name of the good being purchased.</span>
-
-<span class="sd">    Success Response:</span>
-<span class="sd">        Code: 200</span>
-<span class="sd">        Content: Message indicating the result of the sale operation.</span>
-
-<span class="sd">    Error Response:</span>
-<span class="sd">        Code: 400</span>
-<span class="sd">        Content: Error message indicating missing fields or invalid data.</span>
-<span class="sd">        Code: 500</span>
-<span class="sd">        Content: Error message indicating server-side failure.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        POST /api/make_sale</span>
-<span class="sd">        {</span>
-<span class="sd">            &quot;customer_username&quot;: &quot;johndoe&quot;,</span>
-<span class="sd">            &quot;good_name&quot;: &quot;Laptop&quot;</span>
-<span class="sd">        }</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response with a status message.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">sale_data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
-        <span class="n">required_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;customer_username&#39;</span><span class="p">,</span> <span class="s1">&#39;good_name&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">required_fields</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sale_data</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Missing field: </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">delete_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">))</span></div>
 
-        <span class="n">customer_username</span> <span class="o">=</span> <span class="n">sale_data</span><span class="p">[</span><span class="s1">&#39;customer_username&#39;</span><span class="p">]</span>
-        <span class="n">good_name</span> <span class="o">=</span> <span class="n">sale_data</span><span class="p">[</span><span class="s1">&#39;good_name&#39;</span><span class="p">]</span>
-        <span class="n">sale_result</span> <span class="o">=</span> <span class="n">make_sale</span><span class="p">(</span><span class="n">customer_username</span><span class="p">,</span> <span class="n">good_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Sale successful&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">sale_result</span><span class="p">),</span> <span class="mi">200</span>
-        <span class="k">elif</span> <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Insufficient funds or item not available for sale&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">sale_result</span><span class="p">),</span> <span class="mi">400</span>
-        <span class="k">elif</span> <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Customer not found.&quot;</span> <span class="ow">or</span> <span class="n">sale_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Good not found.&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">sale_result</span><span class="p">),</span> <span class="mi">404</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">sale_result</span><span class="p">),</span> <span class="mi">500</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Invalid request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span></div>
-
-<div class="viewcode-block" id="api_get_customer_sales"><a class="viewcode-back" href="../service4.html#service4.api_get_customer_sales">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/customer_sales/&lt;customer_username&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">api_get_customer_sales</span><span class="p">(</span><span class="n">customer_username</span><span class="p">):</span>
+<div class="viewcode-block" id="api_get_product_reviews"><a class="viewcode-back" href="../service4.html#service4.api_get_product_reviews">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/product/&lt;product_name&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_get_product_reviews</span><span class="p">(</span><span class="n">product_name</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    API Endpoint to retrieve all sales made by a specific customer.</span>
+<span class="sd">    API endpoint to retrieve all reviews for a specific product.</span>
 
-<span class="sd">    Method:</span>
-<span class="sd">        GET</span>
+<span class="sd">    Args:</span>
+<span class="sd">        product_name (str): The name of the product.</span>
 
-<span class="sd">    URL:</span>
-<span class="sd">        /api/customer_sales/&lt;customer_username&gt;</span>
-
-<span class="sd">    URL Parameters:</span>
-<span class="sd">        customer_username (str): The username of the customer whose sales records are to be retrieved.</span>
-
-<span class="sd">    Success Response:</span>
-<span class="sd">        Code: 200</span>
-<span class="sd">        Content: List of sales dictionaries in JSON format.</span>
-
-<span class="sd">    Error Response:</span>
-<span class="sd">        Code: 404</span>
-<span class="sd">        Content: Error message indicating the customer was not found or has no sales.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        GET /api/customer_sales/johndoe</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response containing a list of reviews.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sales</span> <span class="o">=</span> <span class="n">get_customer_sales</span><span class="p">(</span><span class="n">customer_username</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sales</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">sales</span><span class="p">),</span> <span class="mi">200</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;No sales found for the customer&quot;</span><span class="p">}),</span> <span class="mi">404</span></div>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">get_product_reviews</span><span class="p">(</span><span class="n">product_name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="api_get_customer_reviews"><a class="viewcode-back" href="../service4.html#service4.api_get_customer_reviews">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/customer/&lt;customer_username&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_get_customer_reviews</span><span class="p">(</span><span class="n">customer_username</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API endpoint to retrieve all reviews submitted by a specific customer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        customer_username (str): The username of the customer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response containing a list of reviews.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">get_customer_reviews</span><span class="p">(</span><span class="n">customer_username</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="api_moderate_review"><a class="viewcode-back" href="../service4.html#service4.api_moderate_review">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/moderate/&lt;int:review_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_moderate_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API endpoint to moderate a review.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review to moderate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response with a status message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;action&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">moderate_review</span><span class="p">(</span><span class="n">review_id</span><span class="p">,</span> <span class="n">action</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="api_get_review_details"><a class="viewcode-back" href="../service4.html#service4.api_get_review_details">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/reviews/details/&lt;int:review_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_get_review_details</span><span class="p">(</span><span class="n">review_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API endpoint to retrieve the details of a specific review.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        review_id (int): The ID of the review.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Response: JSON response with review details or a status message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">get_review_details</span><span class="p">(</span><span class="n">review_id</span><span class="p">))</span></div>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">create_db_table</span><span class="p">()</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5002</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5004</span><span class="p">)</span>
 </pre></div>
 
           </div>
