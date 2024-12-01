@@ -1,0 +1,329 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>service4 module &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="test_service1 module" href="test_service1.html" />
+    <link rel="prev" title="service3 module" href="service3.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-service4">
+<span id="service4-module"></span><h1>service4 module<a class="headerlink" href="#module-service4" title="Permalink to this heading">¶</a></h1>
+<p>Sales Management API using Flask and SQLite.</p>
+<p>This module provides a RESTful API for managing sales transactions in an inventory system.
+It includes functionalities such as displaying available goods, retrieving good details,
+processing sales, and fetching customer-specific sales records.</p>
+<dl class="simple">
+<dt>Dependencies:</dt><dd><ul class="simple">
+<li><p>Flask: Web framework for creating the API.</p></li>
+<li><p>Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).</p></li>
+<li><p>sqlite3: Database engine for storing sales and goods data.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.api_display_goods">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">api_display_goods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#api_display_goods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.api_display_goods" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve all available goods with stock greater than zero.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/display_goods</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: List of goods dictionaries in JSON format.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/display_goods</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.api_get_customer_sales">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">api_get_customer_sales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer_username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#api_get_customer_sales"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.api_get_customer_sales" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve all sales made by a specific customer.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customer_sales/&lt;customer_username&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>customer_username (str): The username of the customer whose sales records are to be retrieved.</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: List of sales dictionaries in JSON format.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 404
+Content: Error message indicating the customer was not found or has no sales.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/customer_sales/johndoe</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.api_get_good_details">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">api_get_good_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#api_get_good_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.api_get_good_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve detailed information about a specific good by its name.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods_details/&lt;good_name&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>good_name (str): The name of the good to retrieve details for.</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Good details dictionary in JSON format.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 404
+Content: Error message indicating the good was not found.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/goods_details/Laptop</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.api_make_sale">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">api_make_sale</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#api_make_sale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.api_make_sale" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to process a sale transaction.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>POST</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/make_sale</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing sale details:</dt><dd><ul class="simple">
+<li><p>‘customer_username’ (str): Username of the customer making the purchase.</p></li>
+<li><p>‘good_name’ (str): Name of the good being purchased.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Message indicating the result of the sale operation.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 400
+Content: Error message indicating missing fields or invalid data.
+Code: 500
+Content: Error message indicating server-side failure.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>POST /api/make_sale
+{</p>
+<blockquote>
+<div><p>“customer_username”: “johndoe”,
+“good_name”: “Laptop”</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.connect_to_db">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">connect_to_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#connect_to_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.connect_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Establishes a connection to the SQLite database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A connection object to the ‘sales_database.db’ SQLite database.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>sqlite3.Connection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.create_db_table">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">create_db_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#create_db_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.create_db_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the ‘sales’ table in the SQLite database.</p>
+<p>The table includes fields for sale ID, customer username, good name, sale date, and sale amount.
+If the table already exists, an error message is printed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.display_available_goods">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">display_available_goods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#display_available_goods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.display_available_goods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves all available goods with stock greater than zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A list of dictionaries, each containing the ‘name’ and ‘price_per_item’ of a good.</dt><dd><p>Returns an empty list if an error occurs.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.get_customer_sales">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">get_customer_sales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer_username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#get_customer_sales"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.get_customer_sales" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves all sales made by a specific customer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>customer_username</strong> (<em>str</em>) – The username of the customer whose sales records are to be retrieved.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A list of dictionaries, each representing a sale made by the customer.</dt><dd><p>Returns an empty list if an error occurs or no sales are found.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.get_good_details">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">get_good_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#get_good_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.get_good_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves detailed information about a specific good by its name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>good_name</strong> (<em>str</em>) – The name of the good to retrieve details for.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary containing all details of the good if found, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service4.make_sale">
+<span class="sig-prename descclassname"><span class="pre">service4.</span></span><span class="sig-name descname"><span class="pre">make_sale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer_username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">good_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service4.html#make_sale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service4.make_sale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes a sale by deducting the item’s price from the customer’s wallet and decreasing the stock count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>customer_username</strong> (<em>str</em>) – The username of the customer making the purchase.</p></li>
+<li><p><strong>good_name</strong> (<em>str</em>) – The name of the good being purchased.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A message indicating the result of the sale operation.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="service1.html">service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service2.html">service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service3.html">service3 module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">service4 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service2.html">test_service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service3.html">test_service3 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service4.html">test_service4 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">service1</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="service3.html" title="previous chapter">service3 module</a></li>
+      <li>Next: <a href="test_service1.html" title="next chapter">test_service1 module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/service4.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>test_service1 &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for test_service1</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">from</span> <span class="nn">service1</span> <span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">create_db_table</span><span class="p">,</span> <span class="n">connect_to_db</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Test Suite for Customer Management API using pytest.</span>
+
+<span class="sd">This module contains unit tests for the Customer Management API implemented in `service1.py`.</span>
+<span class="sd">It tests various endpoints related to adding, retrieving, updating, and deleting customer records.</span>
+<span class="sd">A separate test database is used to ensure that tests do not interfere with the production database.</span>
+
+<span class="sd">Dependencies:</span>
+<span class="sd">    - pytest: Framework for writing and running tests.</span>
+<span class="sd">    - sqlite3: Database engine for setting up the test database.</span>
+<span class="sd">    - service1: The module containing the Flask application and related functions to be tested.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="client"><a class="viewcode-back" href="../test_service1.html#test_service1.client">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">client</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pytest fixture to set up a test client and initialize a test database.</span>
+
+<span class="sd">    This fixture configures the Flask application for testing, overrides the database connection</span>
+<span class="sd">    to use a test-specific database, creates the necessary database tables, and provides a test client</span>
+<span class="sd">    for making API requests. After the tests are completed, it cleans up by removing the test database file.</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        FlaskClient: A test client for the Flask application.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Configure the Flask application for testing</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;TESTING&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DATABASE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;test_customer_database.db&#39;</span>
+
+    <span class="k">def</span> <span class="nf">connect_to_db_override</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overrides the default database connection to use the test database.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            sqlite3.Connection: A connection object to the test SQLite database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DATABASE&#39;</span><span class="p">])</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="k">return</span> <span class="n">conn</span>
+
+    <span class="c1"># Override the connect_to_db function in service1 with the test database connection</span>
+    <span class="kn">import</span> <span class="nn">service1</span>
+    <span class="n">service1</span><span class="o">.</span><span class="n">connect_to_db</span> <span class="o">=</span> <span class="n">connect_to_db_override</span>
+
+    <span class="c1"># Create the necessary database tables in the test database</span>
+    <span class="n">create_db_table</span><span class="p">()</span>
+
+    <span class="c1"># Provide the test client to the tests</span>
+    <span class="k">with</span> <span class="n">app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">client</span>
+
+    <span class="c1"># Clean up by removing the test database file after tests are done</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;DATABASE&#39;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="test_add_customer"><a class="viewcode-back" href="../test_service1.html#test_service1.test_add_customer">[docs]</a><span class="k">def</span> <span class="nf">test_add_customer</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test the API endpoint for adding a new customer.</span>
+
+<span class="sd">    This test sends a POST request to the `/api/customers/add` endpoint with valid customer data</span>
+<span class="sd">    and verifies that the customer is added successfully by checking the response status code</span>
+<span class="sd">    and the returned customer&#39;s username.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        client (FlaskClient): The test client fixture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Test adding a new customer</span>
+    <span class="n">new_customer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;John Doe&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;johndoe&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;password123&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;123 Main St&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;Male&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;marital_status&#39;</span><span class="p">:</span> <span class="s1">&#39;Single&#39;</span>
+    <span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/api/customers/add&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">new_customer</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer addition.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;johndoe&#39;</span><span class="p">,</span> <span class="s2">&quot;Returned username should be &#39;johndoe&#39;.&quot;</span></div>
+
+
+<div class="viewcode-block" id="test_get_customers"><a class="viewcode-back" href="../test_service1.html#test_service1.test_get_customers">[docs]</a><span class="k">def</span> <span class="nf">test_get_customers</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test the API endpoint for retrieving all customers.</span>
+
+<span class="sd">    This test sends a GET request to the `/api/customers` endpoint and verifies that the response</span>
+<span class="sd">    status code is 200 and that the returned data is a list.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        client (FlaskClient): The test client fixture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Test retrieving all customers</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/customers&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful retrieval of customers.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="s2">&quot;Response should be a list of customers.&quot;</span></div>
+
+
+<div class="viewcode-block" id="test_get_customer_by_id"><a class="viewcode-back" href="../test_service1.html#test_service1.test_get_customer_by_id">[docs]</a><span class="k">def</span> <span class="nf">test_get_customer_by_id</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test the API endpoint for retrieving a specific customer by their ID.</span>
+
+<span class="sd">    This test adds a customer to the test database, retrieves it via a GET request to the `/api/customers/&lt;customer_id&gt;` endpoint,</span>
+<span class="sd">    and verifies that the retrieved customer&#39;s username matches the expected value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        client (FlaskClient): The test client fixture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Add a customer to get by ID</span>
+    <span class="n">new_customer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Jane Smith&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;janesmith&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;password123&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;456 Elm St&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;Female&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;marital_status&#39;</span><span class="p">:</span> <span class="s1">&#39;Married&#39;</span>
+    <span class="p">}</span>
+    <span class="n">add_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/api/customers/add&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">new_customer</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">add_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer addition.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">add_response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="n">customer_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;customer_id&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">customer_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Customer ID should be present in the response.&quot;</span>
+
+    <span class="c1"># Test retrieving the customer by ID</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;/api/customers/</span><span class="si">{</span><span class="n">customer_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful retrieval of the customer.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;janesmith&#39;</span><span class="p">,</span> <span class="s2">&quot;Retrieved username should be &#39;janesmith&#39;.&quot;</span></div>
+
+
+<div class="viewcode-block" id="test_update_customer"><a class="viewcode-back" href="../test_service1.html#test_service1.test_update_customer">[docs]</a><span class="k">def</span> <span class="nf">test_update_customer</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test the API endpoint for updating an existing customer&#39;s information.</span>
+
+<span class="sd">    This test adds a customer to the test database, updates the customer&#39;s information via a PUT request</span>
+<span class="sd">    to the `/api/customers/update` endpoint, and verifies that the updates are reflected correctly.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        client (FlaskClient): The test client fixture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Add a customer to update</span>
+    <span class="n">new_customer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Mike Johnson&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;mikejohnson&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;password123&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;789 Oak St&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;Male&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;marital_status&#39;</span><span class="p">:</span> <span class="s1">&#39;Single&#39;</span>
+    <span class="p">}</span>
+    <span class="n">add_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/api/customers/add&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">new_customer</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">add_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer addition.&quot;</span>
+
+    <span class="c1"># Update the customer&#39;s information</span>
+    <span class="n">updated_customer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Michael Johnson&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;mikejohnson&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;newpassword&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">36</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;789 Oak St&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;Male&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;marital_status&#39;</span><span class="p">:</span> <span class="s1">&#39;Married&#39;</span>
+    <span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/api/customers/update&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">updated_customer</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer update.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;full_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Michael Johnson&#39;</span><span class="p">,</span> <span class="s2">&quot;Customer full name should be updated to &#39;Michael Johnson&#39;.&quot;</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">36</span><span class="p">,</span> <span class="s2">&quot;Customer age should be updated to 36.&quot;</span></div>
+
+
+<div class="viewcode-block" id="test_delete_customer"><a class="viewcode-back" href="../test_service1.html#test_service1.test_delete_customer">[docs]</a><span class="k">def</span> <span class="nf">test_delete_customer</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test the API endpoint for deleting a customer.</span>
+
+<span class="sd">    This test adds a customer to the test database, deletes the customer via a DELETE request</span>
+<span class="sd">    to the `/api/customers/delete/&lt;username&gt;` endpoint, and verifies that the deletion is successful.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        client (FlaskClient): The test client fixture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Add a customer to delete</span>
+    <span class="n">new_customer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;full_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Emily Davis&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;username&#39;</span><span class="p">:</span> <span class="s1">&#39;emilydavis&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="s1">&#39;password123&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mi">29</span><span class="p">,</span>
+        <span class="s1">&#39;address&#39;</span><span class="p">:</span> <span class="s1">&#39;321 Pine St&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;gender&#39;</span><span class="p">:</span> <span class="s1">&#39;Female&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;marital_status&#39;</span><span class="p">:</span> <span class="s1">&#39;Single&#39;</span>
+    <span class="p">}</span>
+    <span class="n">add_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/api/customers/add&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">new_customer</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">add_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer addition.&quot;</span>
+
+    <span class="c1"># Delete the customer</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s1">&#39;/api/customers/delete/emilydavis&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful customer deletion.&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Customer deleted successfully&#39;</span><span class="p">,</span> <span class="s2">&quot;Deletion status should indicate success.&quot;</span>
+
+    <span class="c1"># Verify the customer is deleted</span>
+    <span class="n">get_response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/customers&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">get_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;Expected status code 200 for successful retrieval of customers.&quot;</span>
+    <span class="n">customers</span> <span class="o">=</span> <span class="n">get_response</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+    <span class="n">usernames</span> <span class="o">=</span> <span class="p">[</span><span class="n">customer</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">customer</span> <span class="ow">in</span> <span class="n">customers</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="s1">&#39;emilydavis&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">usernames</span><span class="p">,</span> <span class="s2">&quot;Deleted customer &#39;emilydavis&#39; should not be present in the customers list.&quot;</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../service1.html">service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">service1</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

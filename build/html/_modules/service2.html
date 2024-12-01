@@ -1,0 +1,592 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>service2 &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for service2</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Inventory Management API using Flask and SQLite.</span>
+
+<span class="sd">This module provides a RESTful API for managing goods in an inventory system,</span>
+<span class="sd">including operations such as adding, retrieving, updating, and deducting stock</span>
+<span class="sd">for goods. It ensures data integrity through validation and handles various</span>
+<span class="sd">error scenarios gracefully.</span>
+
+<span class="sd">Dependencies:</span>
+<span class="sd">    - Flask: Web framework for creating the API.</span>
+<span class="sd">    - Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).</span>
+<span class="sd">    - sqlite3: Database engine for storing inventory data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">from</span> <span class="nn">flask_cors</span> <span class="kn">import</span> <span class="n">CORS</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">CORS</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">resources</span><span class="o">=</span><span class="p">{</span><span class="sa">r</span><span class="s2">&quot;/*&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;origins&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span><span class="p">}})</span>
+
+<span class="n">DATABASE</span> <span class="o">=</span> <span class="s1">&#39;inventory_database.db&#39;</span>
+
+
+<div class="viewcode-block" id="connect_to_db"><a class="viewcode-back" href="../service2.html#service2.connect_to_db">[docs]</a><span class="k">def</span> <span class="nf">connect_to_db</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Establishes a connection to the SQLite database.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        sqlite3.Connection: A connection object to the specified SQLite database.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DATABASE</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">conn</span></div>
+
+
+<div class="viewcode-block" id="create_db_table"><a class="viewcode-back" href="../service2.html#service2.create_db_table">[docs]</a><span class="k">def</span> <span class="nf">create_db_table</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates the &#39;goods&#39; table in the SQLite database if it does not already exist.</span>
+
+<span class="sd">    The table includes fields for good ID, name, category, price, description, and stock count.</span>
+<span class="sd">    Constraints are applied to ensure data integrity, such as valid categories and non-negative stock counts.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">            CREATE TABLE IF NOT EXISTS goods (</span>
+<span class="s1">                good_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,</span>
+<span class="s1">                name TEXT NOT NULL,</span>
+<span class="s1">                category TEXT CHECK( category IN (&#39;food&#39;, &#39;clothes&#39;, &#39;accessories&#39;, &#39;electronics&#39;) ) NOT NULL,</span>
+<span class="s1">                price REAL NOT NULL,</span>
+<span class="s1">                description TEXT,</span>
+<span class="s1">                stock_count INTEGER NOT NULL CHECK(stock_count &gt;= 0)</span>
+<span class="s1">            );</span>
+<span class="s1">        &#39;&#39;&#39;</span><span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Goods table created successfully or already exists.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating goods table: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="add_good"><a class="viewcode-back" href="../service2.html#service2.add_good">[docs]</a><span class="k">def</span> <span class="nf">add_good</span><span class="p">(</span><span class="n">good</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds a new good to the &#39;goods&#39; table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        good (dict): A dictionary containing good details with keys:</span>
+<span class="sd">            - &#39;name&#39; (str): Name of the good.</span>
+<span class="sd">            - &#39;category&#39; (str): Category of the good. Must be one of [&#39;food&#39;, &#39;clothes&#39;, &#39;accessories&#39;, &#39;electronics&#39;].</span>
+<span class="sd">            - &#39;price&#39; (float): Price of the good. Must be non-negative.</span>
+<span class="sd">            - &#39;description&#39; (str, optional): Description of the good.</span>
+<span class="sd">            - &#39;stock_count&#39; (int): Initial stock count. Must be non-negative.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: The newly added good&#39;s data retrieved by ID, or an empty dictionary if addition fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_good</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            INSERT INTO goods (name, category, price, description, stock_count)</span>
+<span class="s2">            VALUES (?, ?, ?, ?, ?)</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">],</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">],</span> <span class="n">good</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;stock_count&#39;</span><span class="p">]))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">new_good</span> <span class="o">=</span> <span class="n">get_good_by_id</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">lastrowid</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">IntegrityError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Integrity Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error adding good: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">new_good</span></div>
+
+
+<div class="viewcode-block" id="deduct_good"><a class="viewcode-back" href="../service2.html#service2.deduct_good">[docs]</a><span class="k">def</span> <span class="nf">deduct_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">,</span> <span class="n">quantity</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deducts a specified quantity from a good&#39;s stock count.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        good_id (int): The unique ID of the good.</span>
+<span class="sd">        quantity (int): The quantity to deduct. Must be a positive integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A message indicating the result of the deduction operation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="c1"># Check current stock</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT stock_count FROM goods WHERE good_id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good_id</span><span class="p">,))</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+            <span class="n">current_stock</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">current_stock</span> <span class="o">&gt;=</span> <span class="n">quantity</span><span class="p">:</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                    UPDATE goods</span>
+<span class="s2">                    SET stock_count = stock_count - ?</span>
+<span class="s2">                    WHERE good_id = ?</span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">quantity</span><span class="p">,</span> <span class="n">good_id</span><span class="p">))</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                <span class="n">message</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Stock deducted successfully.&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Insufficient stock to deduct.&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Good not found.&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="n">message</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Error deducting stock: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">message</span></div>
+
+
+<div class="viewcode-block" id="update_good"><a class="viewcode-back" href="../service2.html#service2.update_good">[docs]</a><span class="k">def</span> <span class="nf">update_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">,</span> <span class="n">updated_fields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates the details of an existing good based on provided fields.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        good_id (int): The unique ID of the good to update.</span>
+<span class="sd">        updated_fields (dict): A dictionary containing fields to update with their new values.</span>
+<span class="sd">            Valid keys include &#39;name&#39;, &#39;category&#39;, &#39;price&#39;, &#39;description&#39;, and &#39;stock_count&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: The updated good&#39;s data if successful, otherwise an empty dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">updated_good</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+        <span class="c1"># Build the update query dynamically based on provided fields</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">updated_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;stock_count&#39;</span><span class="p">]:</span>
+                <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = ?&quot;</span><span class="p">)</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No valid fields provided for update.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">good_id</span><span class="p">)</span>
+        <span class="n">set_clause</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;UPDATE goods SET </span><span class="si">{</span><span class="n">set_clause</span><span class="si">}</span><span class="s2"> WHERE good_id = ?&quot;</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">updated_good</span> <span class="o">=</span> <span class="n">get_good_by_id</span><span class="p">(</span><span class="n">good_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error updating good: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">updated_good</span></div>
+
+
+<div class="viewcode-block" id="get_all_goods"><a class="viewcode-back" href="../service2.html#service2.get_all_goods">[docs]</a><span class="k">def</span> <span class="nf">get_all_goods</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves all goods from the &#39;goods&#39; table.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: A list of dictionaries, each representing a good. Returns an empty list if an error occurs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">goods</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM goods&quot;</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="n">goods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching goods: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">goods</span></div>
+
+
+<div class="viewcode-block" id="get_good_by_id"><a class="viewcode-back" href="../service2.html#service2.get_good_by_id">[docs]</a><span class="k">def</span> <span class="nf">get_good_by_id</span><span class="p">(</span><span class="n">good_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves a single good by its ID.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        good_id (int): The unique ID of the good.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary representing the good if found, otherwise an empty dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">connect_to_db</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM goods WHERE good_id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">good_id</span><span class="p">,))</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+            <span class="n">good</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error fetching good by ID: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">good</span></div>
+
+
+<div class="viewcode-block" id="api_get_goods"><a class="viewcode-back" href="../service2.html#service2.api_get_goods">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_get_goods</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API Endpoint to retrieve all goods.</span>
+
+<span class="sd">    Method:</span>
+<span class="sd">        GET</span>
+
+<span class="sd">    URL:</span>
+<span class="sd">        /api/goods</span>
+
+<span class="sd">    Success Response:</span>
+<span class="sd">        Code: 200</span>
+<span class="sd">        Content: List of goods dictionaries in JSON format.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        GET /api/goods</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">get_all_goods</span><span class="p">()),</span> <span class="mi">200</span></div>
+
+
+<div class="viewcode-block" id="api_get_good"><a class="viewcode-back" href="../service2.html#service2.api_get_good">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods/&lt;int:good_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_get_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API Endpoint to retrieve a specific good by ID.</span>
+
+<span class="sd">    Method:</span>
+<span class="sd">        GET</span>
+
+<span class="sd">    URL:</span>
+<span class="sd">        /api/goods/&lt;good_id&gt;</span>
+
+<span class="sd">    URL Parameters:</span>
+<span class="sd">        good_id (int): The unique ID of the good.</span>
+
+<span class="sd">    Success Response:</span>
+<span class="sd">        Code: 200</span>
+<span class="sd">        Content: Good dictionary in JSON format.</span>
+
+<span class="sd">    Error Response:</span>
+<span class="sd">        Code: 404</span>
+<span class="sd">        Content: Error message indicating the good was not found.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        GET /api/goods/1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">get_good_by_id</span><span class="p">(</span><span class="n">good_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">good</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">good</span><span class="p">),</span> <span class="mi">200</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Good not found&quot;</span><span class="p">}),</span> <span class="mi">404</span></div>
+
+
+<div class="viewcode-block" id="api_add_good"><a class="viewcode-back" href="../service2.html#service2.api_add_good">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods/add&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_add_good</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API Endpoint to add a new good to the inventory.</span>
+
+<span class="sd">    Method:</span>
+<span class="sd">        POST</span>
+
+<span class="sd">    URL:</span>
+<span class="sd">        /api/goods/add</span>
+
+<span class="sd">    Request Body:</span>
+<span class="sd">        JSON object containing good details:</span>
+<span class="sd">            - &#39;name&#39; (str): Name of the good.</span>
+<span class="sd">            - &#39;category&#39; (str): Category of the good. Must be one of [&#39;food&#39;, &#39;clothes&#39;, &#39;accessories&#39;, &#39;electronics&#39;].</span>
+<span class="sd">            - &#39;price&#39; (float): Price of the good. Must be non-negative.</span>
+<span class="sd">            - &#39;description&#39; (str, optional): Description of the good.</span>
+<span class="sd">            - &#39;stock_count&#39; (int): Initial stock count. Must be non-negative.</span>
+
+<span class="sd">    Success Response:</span>
+<span class="sd">        Code: 201</span>
+<span class="sd">        Content: Newly added good dictionary in JSON format.</span>
+
+<span class="sd">    Error Responses:</span>
+<span class="sd">        Code: 400</span>
+<span class="sd">            - Missing required fields.</span>
+<span class="sd">            - Invalid category, stock_count, or price.</span>
+<span class="sd">        Code: 500</span>
+<span class="sd">            - Failed to add good due to server error.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        POST /api/goods/add</span>
+<span class="sd">        {</span>
+<span class="sd">            &quot;name&quot;: &quot;Laptop&quot;,</span>
+<span class="sd">            &quot;category&quot;: &quot;electronics&quot;,</span>
+<span class="sd">            &quot;price&quot;: 999.99,</span>
+<span class="sd">            &quot;description&quot;: &quot;High-performance laptop&quot;,</span>
+<span class="sd">            &quot;stock_count&quot;: 50</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">good</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">required_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="s1">&#39;stock_count&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">required_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">good</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Missing field: </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate category</span>
+        <span class="k">if</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;food&#39;</span><span class="p">,</span> <span class="s1">&#39;clothes&#39;</span><span class="p">,</span> <span class="s1">&#39;accessories&#39;</span><span class="p">,</span> <span class="s1">&#39;electronics&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid category&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate stock_count</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">good</span><span class="p">[</span><span class="s1">&#39;stock_count&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;stock_count&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid stock_count&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate price</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">good</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="n">good</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid price&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="n">new_good</span> <span class="o">=</span> <span class="n">add_good</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_good</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">new_good</span><span class="p">),</span> <span class="mi">201</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Failed to add good&quot;</span><span class="p">}),</span> <span class="mi">500</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Invalid request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span></div>
+
+
+<div class="viewcode-block" id="api_deduct_good"><a class="viewcode-back" href="../service2.html#service2.api_deduct_good">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods/deduct/&lt;int:good_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_deduct_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API Endpoint to deduct a quantity from a good&#39;s stock count.</span>
+
+<span class="sd">    Method:</span>
+<span class="sd">        PUT</span>
+
+<span class="sd">    URL:</span>
+<span class="sd">        /api/goods/deduct/&lt;good_id&gt;</span>
+
+<span class="sd">    URL Parameters:</span>
+<span class="sd">        good_id (int): The unique ID of the good.</span>
+
+<span class="sd">    Request Body:</span>
+<span class="sd">        JSON object containing:</span>
+<span class="sd">            - &#39;quantity&#39; (int): The quantity to deduct. Must be a positive integer.</span>
+
+<span class="sd">    Success Responses:</span>
+<span class="sd">        Code: 200</span>
+<span class="sd">            - Stock deducted successfully.</span>
+<span class="sd">        Code: 400</span>
+<span class="sd">            - Missing &#39;quantity&#39; field.</span>
+<span class="sd">            - Invalid &#39;quantity&#39; value.</span>
+<span class="sd">            - Insufficient stock to deduct.</span>
+<span class="sd">        Code: 404</span>
+<span class="sd">            - Good not found.</span>
+
+<span class="sd">    Error Response:</span>
+<span class="sd">        Code: 500</span>
+<span class="sd">            - Server error during deduction.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        PUT /api/goods/deduct/1</span>
+<span class="sd">        {</span>
+<span class="sd">            &quot;quantity&quot;: 5</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;quantity&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Missing field: quantity&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+        <span class="n">quantity</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;quantity&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quantity</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">quantity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid quantity&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">deduct_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">,</span> <span class="n">quantity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Stock deducted successfully.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="mi">200</span>
+        <span class="k">elif</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Insufficient stock to deduct.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="mi">400</span>
+        <span class="k">elif</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Good not found.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="mi">404</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="mi">500</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Invalid request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span></div>
+
+
+<div class="viewcode-block" id="api_update_good"><a class="viewcode-back" href="../service2.html#service2.api_update_good">[docs]</a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/goods/update/&lt;int:good_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">api_update_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    API Endpoint to update details of an existing good.</span>
+
+<span class="sd">    Method:</span>
+<span class="sd">        PUT</span>
+
+<span class="sd">    URL:</span>
+<span class="sd">        /api/goods/update/&lt;good_id&gt;</span>
+
+<span class="sd">    URL Parameters:</span>
+<span class="sd">        good_id (int): The unique ID of the good to update.</span>
+
+<span class="sd">    Request Body:</span>
+<span class="sd">        JSON object containing fields to update. Valid fields include:</span>
+<span class="sd">            - &#39;name&#39; (str, optional)</span>
+<span class="sd">            - &#39;category&#39; (str, optional): Must be one of [&#39;food&#39;, &#39;clothes&#39;, &#39;accessories&#39;, &#39;electronics&#39;] if provided.</span>
+<span class="sd">            - &#39;price&#39; (float, optional): Must be non-negative if provided.</span>
+<span class="sd">            - &#39;description&#39; (str, optional)</span>
+<span class="sd">            - &#39;stock_count&#39; (int, optional): Must be non-negative if provided.</span>
+
+<span class="sd">    Success Response:</span>
+<span class="sd">        Code: 200</span>
+<span class="sd">        Content: Updated good dictionary in JSON format.</span>
+
+<span class="sd">    Error Responses:</span>
+<span class="sd">        Code: 400</span>
+<span class="sd">            - No fields to update.</span>
+<span class="sd">            - Invalid category, stock_count, or price.</span>
+<span class="sd">            - Invalid request format.</span>
+<span class="sd">        Code: 404</span>
+<span class="sd">            - Good not found or failed to update.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        PUT /api/goods/update/1</span>
+<span class="sd">        {</span>
+<span class="sd">            &quot;price&quot;: 899.99,</span>
+<span class="sd">            &quot;stock_count&quot;: 45</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">updated_fields</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">updated_fields</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;No fields to update&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate category if it&#39;s being updated</span>
+        <span class="k">if</span> <span class="s1">&#39;category&#39;</span> <span class="ow">in</span> <span class="n">updated_fields</span> <span class="ow">and</span> <span class="n">updated_fields</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;food&#39;</span><span class="p">,</span> <span class="s1">&#39;clothes&#39;</span><span class="p">,</span> <span class="s1">&#39;accessories&#39;</span><span class="p">,</span> <span class="s1">&#39;electronics&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid category&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate stock_count if it&#39;s being updated</span>
+        <span class="k">if</span> <span class="s1">&#39;stock_count&#39;</span> <span class="ow">in</span> <span class="n">updated_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">updated_fields</span><span class="p">[</span><span class="s1">&#39;stock_count&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">updated_fields</span><span class="p">[</span><span class="s1">&#39;stock_count&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid stock_count&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="c1"># Validate price if it&#39;s being updated</span>
+        <span class="k">if</span> <span class="s1">&#39;price&#39;</span> <span class="ow">in</span> <span class="n">updated_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">updated_fields</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="n">updated_fields</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Invalid price&quot;</span><span class="p">}),</span> <span class="mi">400</span>
+
+        <span class="n">updated_good</span> <span class="o">=</span> <span class="n">update_good</span><span class="p">(</span><span class="n">good_id</span><span class="p">,</span> <span class="n">updated_fields</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">updated_good</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">updated_good</span><span class="p">),</span> <span class="mi">200</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Good not found or failed to update&quot;</span><span class="p">}),</span> <span class="mi">404</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Invalid request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}),</span> <span class="mi">400</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">create_db_table</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5001</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../service1.html">service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../service2.html">service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test_service2.html">test_service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">service1</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

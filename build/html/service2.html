@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>service2 module &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="test_service1 module" href="test_service1.html" />
+    <link rel="prev" title="service1 module" href="service1.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-service2">
+<span id="service2-module"></span><h1>service2 module<a class="headerlink" href="#module-service2" title="Permalink to this heading">¶</a></h1>
+<p>Inventory Management API using Flask and SQLite.</p>
+<p>This module provides a RESTful API for managing goods in an inventory system,
+including operations such as adding, retrieving, updating, and deducting stock
+for goods. It ensures data integrity through validation and handles various
+error scenarios gracefully.</p>
+<dl class="simple">
+<dt>Dependencies:</dt><dd><ul class="simple">
+<li><p>Flask: Web framework for creating the API.</p></li>
+<li><p>Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).</p></li>
+<li><p>sqlite3: Database engine for storing inventory data.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.add_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">add_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#add_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.add_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new good to the ‘goods’ table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>good</strong> (<em>dict</em>) – A dictionary containing good details with keys:
+- ‘name’ (str): Name of the good.
+- ‘category’ (str): Category of the good. Must be one of [‘food’, ‘clothes’, ‘accessories’, ‘electronics’].
+- ‘price’ (float): Price of the good. Must be non-negative.
+- ‘description’ (str, optional): Description of the good.
+- ‘stock_count’ (int): Initial stock count. Must be non-negative.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The newly added good’s data retrieved by ID, or an empty dictionary if addition fails.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.api_add_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">api_add_good</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#api_add_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.api_add_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to add a new good to the inventory.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>POST</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods/add</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing good details:</dt><dd><ul class="simple">
+<li><p>‘name’ (str): Name of the good.</p></li>
+<li><p>‘category’ (str): Category of the good. Must be one of [‘food’, ‘clothes’, ‘accessories’, ‘electronics’].</p></li>
+<li><p>‘price’ (float): Price of the good. Must be non-negative.</p></li>
+<li><p>‘description’ (str, optional): Description of the good.</p></li>
+<li><p>‘stock_count’ (int): Initial stock count. Must be non-negative.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 201
+Content: Newly added good dictionary in JSON format.</p>
+</dd>
+<dt>Error Responses:</dt><dd><dl class="simple">
+<dt>Code: 400</dt><dd><ul class="simple">
+<li><p>Missing required fields.</p></li>
+<li><p>Invalid category, stock_count, or price.</p></li>
+</ul>
+</dd>
+<dt>Code: 500</dt><dd><ul class="simple">
+<li><p>Failed to add good due to server error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>POST /api/goods/add
+{</p>
+<blockquote>
+<div><p>“name”: “Laptop”,
+“category”: “electronics”,
+“price”: 999.99,
+“description”: “High-performance laptop”,
+“stock_count”: 50</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.api_deduct_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">api_deduct_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#api_deduct_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.api_deduct_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to deduct a quantity from a good’s stock count.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>PUT</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods/deduct/&lt;good_id&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>good_id (int): The unique ID of the good.</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing:</dt><dd><ul class="simple">
+<li><p>‘quantity’ (int): The quantity to deduct. Must be a positive integer.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Responses:</dt><dd><dl class="simple">
+<dt>Code: 200</dt><dd><ul class="simple">
+<li><p>Stock deducted successfully.</p></li>
+</ul>
+</dd>
+<dt>Code: 400</dt><dd><ul class="simple">
+<li><p>Missing ‘quantity’ field.</p></li>
+<li><p>Invalid ‘quantity’ value.</p></li>
+<li><p>Insufficient stock to deduct.</p></li>
+</ul>
+</dd>
+<dt>Code: 404</dt><dd><ul class="simple">
+<li><p>Good not found.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Error Response:</dt><dd><dl class="simple">
+<dt>Code: 500</dt><dd><ul class="simple">
+<li><p>Server error during deduction.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>PUT /api/goods/deduct/1
+{</p>
+<blockquote>
+<div><p>“quantity”: 5</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.api_get_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">api_get_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#api_get_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.api_get_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve a specific good by ID.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods/&lt;good_id&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>good_id (int): The unique ID of the good.</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Good dictionary in JSON format.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 404
+Content: Error message indicating the good was not found.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/goods/1</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.api_get_goods">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">api_get_goods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#api_get_goods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.api_get_goods" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve all goods.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: List of goods dictionaries in JSON format.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/goods</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.api_update_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">api_update_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#api_update_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.api_update_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to update details of an existing good.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>PUT</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/goods/update/&lt;good_id&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>good_id (int): The unique ID of the good to update.</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing fields to update. Valid fields include:</dt><dd><ul class="simple">
+<li><p>‘name’ (str, optional)</p></li>
+<li><p>‘category’ (str, optional): Must be one of [‘food’, ‘clothes’, ‘accessories’, ‘electronics’] if provided.</p></li>
+<li><p>‘price’ (float, optional): Must be non-negative if provided.</p></li>
+<li><p>‘description’ (str, optional)</p></li>
+<li><p>‘stock_count’ (int, optional): Must be non-negative if provided.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Updated good dictionary in JSON format.</p>
+</dd>
+<dt>Error Responses:</dt><dd><dl class="simple">
+<dt>Code: 400</dt><dd><ul class="simple">
+<li><p>No fields to update.</p></li>
+<li><p>Invalid category, stock_count, or price.</p></li>
+<li><p>Invalid request format.</p></li>
+</ul>
+</dd>
+<dt>Code: 404</dt><dd><ul class="simple">
+<li><p>Good not found or failed to update.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>PUT /api/goods/update/1
+{</p>
+<blockquote>
+<div><p>“price”: 899.99,
+“stock_count”: 45</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.connect_to_db">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">connect_to_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#connect_to_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.connect_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Establishes a connection to the SQLite database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A connection object to the specified SQLite database.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>sqlite3.Connection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.create_db_table">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">create_db_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#create_db_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.create_db_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the ‘goods’ table in the SQLite database if it does not already exist.</p>
+<p>The table includes fields for good ID, name, category, price, description, and stock count.
+Constraints are applied to ensure data integrity, such as valid categories and non-negative stock counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.deduct_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">deduct_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#deduct_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.deduct_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deducts a specified quantity from a good’s stock count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>good_id</strong> (<em>int</em>) – The unique ID of the good.</p></li>
+<li><p><strong>quantity</strong> (<em>int</em>) – The quantity to deduct. Must be a positive integer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A message indicating the result of the deduction operation.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.get_all_goods">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">get_all_goods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#get_all_goods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.get_all_goods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves all goods from the ‘goods’ table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of dictionaries, each representing a good. Returns an empty list if an error occurs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.get_good_by_id">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">get_good_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#get_good_by_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.get_good_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a single good by its ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>good_id</strong> (<em>int</em>) – The unique ID of the good.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary representing the good if found, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service2.update_good">
+<span class="sig-prename descclassname"><span class="pre">service2.</span></span><span class="sig-name descname"><span class="pre">update_good</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">good_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">updated_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service2.html#update_good"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service2.update_good" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the details of an existing good based on provided fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>good_id</strong> (<em>int</em>) – The unique ID of the good to update.</p></li>
+<li><p><strong>updated_fields</strong> (<em>dict</em>) – A dictionary containing fields to update with their new values.
+Valid keys include ‘name’, ‘category’, ‘price’, ‘description’, and ‘stock_count’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The updated good’s data if successful, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="service1.html">service1 module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service2.html">test_service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">service1</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="service1.html" title="previous chapter">service1 module</a></li>
+      <li>Next: <a href="test_service1.html" title="next chapter">test_service1 module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/service2.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

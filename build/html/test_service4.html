@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>test_service4 module &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="service1" href="modules.html" />
+    <link rel="prev" title="test_service3 module" href="test_service3.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-test_service4">
+<span id="test-service4-module"></span><h1>test_service4 module<a class="headerlink" href="#module-test_service4" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.client">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pytest fixture to set up a test client and initialize a test database.</p>
+<p>This fixture configures the Flask application for testing, overrides the database connection
+to use a test-specific database, creates the necessary database tables, and provides a test client
+for making API requests. After the tests are completed, it cleans up by removing the test database file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Yields</dt>
+<dd class="field-odd"><p><em>FlaskClient</em> – A test client for the Flask application.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.test_add_review">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_add_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_add_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_add_review" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the API endpoint for adding a new review.</p>
+<p>This test sends a POST request to the <cite>/api/reviews</cite> endpoint with valid review data
+and verifies that the review is added successfully.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.test_delete_review">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_delete_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_delete_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_delete_review" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the API endpoint for deleting a review.</p>
+<p>This test inserts a review directly into the test database, deletes it via a DELETE request,
+and verifies that the deletion is successful.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.test_get_product_reviews">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_get_product_reviews</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_get_product_reviews"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_get_product_reviews" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the API endpoint for retrieving all reviews of a specific product.</p>
+<p>This test inserts a review directly into the test database and then sends a GET request
+to the <cite>/api/reviews/product/&lt;product_name&gt;</cite> endpoint to verify that the review is retrieved correctly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.test_moderate_review">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_moderate_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_moderate_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_moderate_review" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the API endpoint for moderating a review.</p>
+<p>This test inserts a review directly into the test database, moderates it via a POST request,
+and verifies that the moderation status is updated correctly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="test_service4.test_update_review">
+<span class="sig-prename descclassname"><span class="pre">test_service4.</span></span><span class="sig-name descname"><span class="pre">test_update_review</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_service4.html#test_update_review"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#test_service4.test_update_review" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the API endpoint for updating an existing review.</p>
+<p>This test inserts a review directly into the test database, updates it via a PUT request,
+and verifies that the update is successful.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>client</strong> (<em>FlaskClient</em>) – The test client fixture.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="service1.html">service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service2.html">service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service3.html">service3 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service4.html">service4 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service2.html">test_service2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service3.html">test_service3 module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">test_service4 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">service1</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="test_service3.html" title="previous chapter">test_service3 module</a></li>
+      <li>Next: <a href="modules.html" title="next chapter">service1</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/test_service4.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

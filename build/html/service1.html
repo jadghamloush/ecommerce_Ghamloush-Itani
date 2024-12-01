@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>service1 module &#8212; Ecommerce Jad Ghamloush &amp; Saadallah Itani 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="test_service1 module" href="test_service1.html" />
+    <link rel="prev" title="Welcome to Ecommerce Jad Ghamloush &amp; Saadallah Itani’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-service1">
+<span id="service1-module"></span><h1>service1 module<a class="headerlink" href="#module-service1" title="Permalink to this heading">¶</a></h1>
+<p>Customer Management API using Flask and SQLite.</p>
+<p>This module provides a RESTful API for managing customer data, including operations
+such as creating, reading, updating, and deleting customer records. It also includes
+functions to manage customer wallet balances.</p>
+<dl class="simple">
+<dt>Dependencies:</dt><dd><ul class="simple">
+<li><p>Flask: Web framework for creating the API.</p></li>
+<li><p>Flask-CORS: Handling Cross-Origin Resource Sharing (CORS).</p></li>
+<li><p>sqlite3: Database engine for storing customer data.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.api_add_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">api_add_customer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#api_add_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.api_add_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to add a new customer.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>POST</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customers/add</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing customer details:</dt><dd><ul class="simple">
+<li><p>‘full_name’ (str)</p></li>
+<li><p>‘username’ (str)</p></li>
+<li><p>‘password’ (str)</p></li>
+<li><p>‘age’ (int)</p></li>
+<li><p>‘address’ (str)</p></li>
+<li><p>‘gender’ (str)</p></li>
+<li><p>‘marital_status’ (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 201
+Content: Inserted customer dictionary in JSON format.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 400
+Content: Empty dictionary if insertion fails.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>POST /api/customers/add
+{</p>
+<blockquote>
+<div><p>“full_name”: “John Doe”,
+“username”: “johndoe”,
+“password”: “securepassword”,
+“age”: 30,
+“address”: “123 Main St”,
+“gender”: “Male”,
+“marital_status”: “Single”</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.api_delete_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">api_delete_customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#api_delete_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.api_delete_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to delete a customer by username.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>DELETE</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customers/delete/&lt;username&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>username (str): The unique username of the customer to delete.</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Message indicating the result of the deletion.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>DELETE /api/customers/delete/johndoe</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.api_get_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">api_get_customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#api_get_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.api_get_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve a specific customer by ID.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customers/&lt;customer_id&gt;</p>
+</dd>
+<dt>URL Parameters:</dt><dd><p>customer_id (int): The unique ID of the customer.</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Customer dictionary in JSON format.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/customers/1</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.api_get_customers">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">api_get_customers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#api_get_customers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.api_get_customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to retrieve all customers.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>GET</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customers</p>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: List of customer dictionaries in JSON format.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>GET /api/customers</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.api_update_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">api_update_customer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#api_update_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.api_update_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>API Endpoint to update an existing customer’s information.</p>
+<dl class="simple">
+<dt>Method:</dt><dd><p>PUT</p>
+</dd>
+<dt>URL:</dt><dd><p>/api/customers/update</p>
+</dd>
+<dt>Request Body:</dt><dd><dl class="simple">
+<dt>JSON object containing updated customer details:</dt><dd><ul class="simple">
+<li><p>‘full_name’ (str)</p></li>
+<li><p>‘username’ (str)</p></li>
+<li><p>‘password’ (str)</p></li>
+<li><p>‘age’ (int)</p></li>
+<li><p>‘address’ (str)</p></li>
+<li><p>‘gender’ (str)</p></li>
+<li><p>‘marital_status’ (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>Success Response:</dt><dd><p>Code: 200
+Content: Updated customer dictionary in JSON format.</p>
+</dd>
+<dt>Error Response:</dt><dd><p>Code: 400
+Content: Empty dictionary if update fails.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>PUT /api/customers/update
+{</p>
+<blockquote>
+<div><p>“full_name”: “John Doe Jr.”,
+“username”: “johndoe”,
+“password”: “newpassword”,
+“age”: 31,
+“address”: “456 Elm St”,
+“gender”: “Male”,
+“marital_status”: “Married”</p>
+</div></blockquote>
+<p>}</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.charge_customer_wallet">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">charge_customer_wallet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#charge_customer_wallet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.charge_customer_wallet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increases a customer’s wallet balance by a specified amount.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>) – The unique username of the customer.</p></li>
+<li><p><strong>amount</strong> (<em>float</em>) – The amount to add to the wallet balance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.connect_to_db">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">connect_to_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#connect_to_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.connect_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Establishes a connection to the SQLite database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A connection object to the ‘customer_database.db’ SQLite database.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>sqlite3.Connection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.create_db_table">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">create_db_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#create_db_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.create_db_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the ‘customers’ table in the SQLite database.</p>
+<p>The table includes fields for customer ID, full name, username, password, age,
+address, gender, marital status, and wallet balance. If the table already exists,
+an error message is printed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.deduct_from_customer_wallet">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">deduct_from_customer_wallet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#deduct_from_customer_wallet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.deduct_from_customer_wallet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decreases a customer’s wallet balance by a specified amount.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>) – The unique username of the customer.</p></li>
+<li><p><strong>amount</strong> (<em>float</em>) – The amount to deduct from the wallet balance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.delete_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">delete_customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#delete_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.delete_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes a customer from the ‘customers’ table based on their username.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>username</strong> (<em>str</em>) – The unique username of the customer to delete.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A message indicating the result of the deletion operation.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.get_customer_by_id">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">get_customer_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#get_customer_by_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.get_customer_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a single customer by their ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>customer_id</strong> (<em>int</em>) – The unique ID of the customer.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary representing the customer if found, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.get_customer_by_username">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">get_customer_by_username</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#get_customer_by_username"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.get_customer_by_username" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a single customer by their username.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>username</strong> (<em>str</em>) – The unique username of the customer.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary representing the customer if found, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.get_customers">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">get_customers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#get_customers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.get_customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves all customers from the ‘customers’ table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of dictionaries, each representing a customer. Returns an empty list if an error occurs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.insert_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">insert_customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#insert_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.insert_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inserts a new customer into the ‘customers’ table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>customer</strong> (<em>dict</em>) – A dictionary containing customer details with keys:
+- ‘full_name’ (str): Full name of the customer.
+- ‘username’ (str): Unique username.
+- ‘password’ (str): Password for the account.
+- ‘age’ (int): Age of the customer.
+- ‘address’ (str): Address of the customer.
+- ‘gender’ (str): Gender of the customer.
+- ‘marital_status’ (str): Marital status of the customer.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The inserted customer data retrieved by ID, or an empty dictionary if insertion fails.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="service1.update_customer">
+<span class="sig-prename descclassname"><span class="pre">service1.</span></span><span class="sig-name descname"><span class="pre">update_customer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/service1.html#update_customer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#service1.update_customer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates an existing customer’s information based on their username.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>customer</strong> (<em>dict</em>) – A dictionary containing updated customer details with keys:
+- ‘full_name’ (str): Updated full name.
+- ‘password’ (str): Updated password.
+- ‘age’ (int): Updated age.
+- ‘address’ (str): Updated address.
+- ‘gender’ (str): Updated gender.
+- ‘marital_status’ (str): Updated marital status.
+- ‘username’ (str): Username of the customer to update.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The updated customer data if successful, otherwise an empty dictionary.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Ecommerce Jad Ghamloush & Saadallah Itani</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">service1 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_service1.html">test_service1 module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">service1</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">service1 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_service1.html">test_service1 module</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Ecommerce Jad Ghamloush &amp; Saadallah Itani’s documentation!</a></li>
+      <li>Next: <a href="test_service1.html" title="next chapter">test_service1 module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Saad Itani , Jad Ghamloush.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/service1.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
