@@ -25,7 +25,7 @@ To build and run this project, you need to have the following software installed
 Clone the project repository to your local machine:
 
 ```bash
-git clone https://github.com/yourusername/ecommerce_project.git
+git clone https://github.com/jadghamloush/ecommerce_project.git
 cd ecommerce_project
 ```
 
